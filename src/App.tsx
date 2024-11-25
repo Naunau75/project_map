@@ -1,5 +1,5 @@
 import React from 'react';
-import Map from './components/Map';
+import TspMap from './components/TspMap';
 import { Navigation } from 'lucide-react';
 
 function App() {
@@ -9,15 +9,15 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Navigation className="h-6 w-6 text-blue-500" />
-            <h1 className="text-xl font-semibold text-gray-900">Interactive Map</h1>
+            <h1 className="text-xl font-semibold text-gray-900">Voyageur de Commerce</h1>
           </div>
           <div className="text-sm text-gray-500">
-            Powered by OpenStreetMap
+            Cliquez sur la carte pour ajouter des points
           </div>
         </div>
       </header>
       <main className="flex-1 h-[calc(100vh-64px)]">
-        <Map />
+        <TspMap />
       </main>
     </div>
   );
