@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, useMapEvents } from 'react-leaflet';
 import { useState } from 'react';
 import { Navigation2, RotateCcw } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
@@ -27,6 +27,7 @@ interface Point {
   lng: number;
   order: number | null;
   address?: string;
+  distanceToNext?: number;
 }
 
 function MapClickHandler({ onMapClick }: { onMapClick: (latlng: LatLng) => void }) {
@@ -60,6 +61,7 @@ export default function TspMap() {
   const [solved, setSolved] = useState(false);
   const [totalDistance, setTotalDistance] = useState<number>(0);
   const [loading, setLoading] = useState(false);
+  const [path, setPath] = useState<[number, number][]>([]);
 
   const handleMapClick = async (latlng: LatLng) => {
     if (solved || loading) return;
@@ -89,6 +91,7 @@ export default function TspMap() {
     let current = unvisited[0];
     let order = 0;
     let totalDist = 0;
+    const pathCoordinates: [number, number][] = [[current.lat, current.lng]];
     
     solution[0].order = order++;
     unvisited.shift();
@@ -106,15 +109,22 @@ export default function TspMap() {
       });
 
       current = unvisited[nextIndex];
-      solution[points.indexOf(current)].order = order++;
+      const currentIndex = points.indexOf(current);
+      solution[currentIndex].order = order++;
+      solution[currentIndex].distanceToNext = minDist;
       totalDist += minDist;
+      pathCoordinates.push([current.lat, current.lng]);
       unvisited.splice(nextIndex, 1);
     }
 
-    totalDist += calculateDistance(current, solution[0]);
-    
+    const distanceToStart = calculateDistance(current, solution[0]);
+    totalDist += distanceToStart;
+    solution[solution.length - 1].distanceToNext = distanceToStart;
+    pathCoordinates.push([solution[0].lat, solution[0].lng]);
+
     setPoints(solution);
     setTotalDistance(totalDist);
+    setPath(pathCoordinates);
     setSolved(true);
   };
 
@@ -152,8 +162,16 @@ export default function TspMap() {
                 .map((point, idx) => (
                   <li key={idx} className="truncate">
                     {point.address || 'Adresse inconnue'}
+                    {point.distanceToNext && (
+                      <span className="text-gray-500 ml-2">
+                        → {point.distanceToNext.toFixed(2)} km
+                      </span>
+                    )}
                   </li>
               ))}
+              <li className="truncate">
+                {points[0]?.address || 'Adresse inconnue'} (Retour au départ)
+              </li>
             </ol>
           </div>
         )}
@@ -182,6 +200,14 @@ export default function TspMap() {
             </Popup>
           </Marker>
         ))}
+        {solved && (
+          <Polyline
+            positions={path}
+            color="blue"
+            weight={3}
+            opacity={0.7}
+          />
+        )}
       </MapContainer>
     </div>
   );
